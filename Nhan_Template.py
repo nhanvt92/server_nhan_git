@@ -7,7 +7,7 @@ from airflow.operators.python_operator import PythonOperator
 
 local_tz = pendulum.timezone("Asia/Bangkok")
 
-name='bar_nhan'
+name='bar_nhan_updated'
 prefix='foo'
 csv_path = '/usr/local/airflow/plugins'+'/'
 
