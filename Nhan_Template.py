@@ -110,10 +110,14 @@ A.data_type AS "Data type",
 
 A.monthname AS "Tháng",
 Case when b.songaybanmtd < b.songaybantrongthang then round(a.soluong / b.songaybanmtd * b.songaybantrongthang ,0) 
-else a.soluong end as "Số lượng"
+else a.soluong end as "Số lượng",
+Case when a.month = EXTRACT(month from now()) and a.year = EXTRACT(year from now()) then 
+c.soluong else a.soluong end as "AVG Số lượng",
+a.soluong as "Số lượng MTD"
 from result_h_data a
 LEFT JOIN sale_days b on a.month = b.month and a.year = b.year
-ORDER BY masanpham,makenhkh,a.month
+LEFT JOIN ( SELECT masanpham,tensanphamnb,makenhkh,data_type,round(avg(soluong),0) as soluong, round(avg(doanhsochuavat),0) as doanhsochuavat  from result_h_data where year = EXTRACT(year from now()) and month < EXTRACT(month from now()) GROUP BY masanpham,tensanphamnb,makenhkh,data_type ) c on concat(c.masanpham,c.tensanphamnb,c.makenhkh,c.data_type) = concat(a.masanpham,a.tensanphamnb,a.makenhkh,a.data_type)
+ORDER BY a.masanpham,a.makenhkh,a.month
 '''
 
 dag = DAG(prefix+name,
