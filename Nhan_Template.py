@@ -120,8 +120,8 @@ dag = DAG(prefix+name,
           catchup=False,
           default_args=dag_params,
           # https://crontab.guru/
-          # @once
-          schedule_interval= '@once',
+          # @once 0 0 * * 1,3,5
+          schedule_interval= '0 0 * * 1,3,5',
           tags=[prefix+name, 'Nhan', 'Daily', '60mins']
 )
 
