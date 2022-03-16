@@ -61,6 +61,6 @@ dummy_start = DummyOperator(task_id="dummy_start", dag=dag)
 
 python1 = PythonOperator(task_id="python1", python_callable=python1, dag=dag)
 
-python2 = PythonOperator(task_id="python2", python_callable=python2, dag=dag
+python2 = PythonOperator(task_id="python2", python_callable=python2, dag=dag)
 
 dummy_start >> python1 >> python2
