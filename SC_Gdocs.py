@@ -115,7 +115,7 @@ else a.soluong end as "Số lượng",
 Case 
 when a.month = EXTRACT(month from now()) and a.year = EXTRACT(year from now()) and c.soluong  is null then 0
 when a.month = EXTRACT(month from now()) and a.year = EXTRACT(year from now()) then  c.soluong 
-else a.soluong end as "AVG Số lượng",
+else a.soluong end as "AVG Số lượng Các Tháng Trước",
 a.soluong as "Số lượng MTD"
 from result_h_data a
 LEFT JOIN sale_days b on a.month = b.month and a.year = b.year
