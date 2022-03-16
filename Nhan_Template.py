@@ -54,14 +54,13 @@ def python2():
     body=dict(
         majorDimension='ROWS',
         values=df1.T.reset_index().T.values.tolist())
-).execute()
+    ).execute()
 
 
 dummy_start = DummyOperator(task_id="dummy_start", dag=dag)
 
-python1 = PythonOperator(task_id="update_table", python_callable=python1, dag=dag)
+python1 = PythonOperator(task_id="python1", python_callable=python1, dag=dag)
 
-python2 = PythonOperator(task_id="etl_to_postgres", python_callable=python2, dag=dag
+python2 = PythonOperator(task_id="python2", python_callable=python2, dag=dag
 
 dummy_start >> python1 >> python2
-# >> tab_refresh
