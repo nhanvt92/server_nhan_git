@@ -1,5 +1,5 @@
 from utils.df_handle import *
-from google_service import get_service
+from nhan.google_service import get_service
 import pendulum
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
