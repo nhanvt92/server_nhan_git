@@ -1,4 +1,5 @@
 from utils.df_handle import *
+from google_service import get_service
 import pendulum
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
@@ -7,8 +8,8 @@ from airflow.operators.python_operator import PythonOperator
 
 local_tz = pendulum.timezone("Asia/Bangkok")
 
-name='bar_nhan_updated'
-prefix='foo'
+name='Gdocs'
+prefix='SC_'
 csv_path = '/usr/local/airflow/plugins'+'/'
 
 dag_params = {
@@ -24,42 +25,43 @@ dag_params = {
     # 'retry_delay': timedelta(minutes=10),
 }
 
+service = get_service()
+spreadsheets_id = '13Gg1pzdNlsocvt0-Ws41mVoeUUDEsUBOrt5O8J-7aLM
 
 dag = DAG(prefix+name,
           catchup=False,
           default_args=dag_params,
           # https://crontab.guru/
-          schedule_interval= '0 10,17 * * *',
+          # @once
+          schedule_interval= '@once',
           tags=[prefix+name, 'Nhan', 'Daily', '60mins']
 )
 
 
 def python1():
-    pass
+    rangeAll = '{0}!A:AA'.format('Historical Data')
+    body = {}
+    service.spreadsheets().values().clear( spreadsheetId=spreadsheets_id, range=rangeAll,body=body ).execute()
 
 # transform
 
 def python2():
-    pass
-
-def truncate():
-    pass
-
-
-def insert():
-    pass
-
+    df1 = get_ps_df("")
+    service.spreadsheets().values().append(
+    spreadsheetId=spreadsheets_id,
+    valueInputOption='RAW',
+    range='Historical Data!A1',
+    body=dict(
+        majorDimension='ROWS',
+        values=df1.T.reset_index().T.values.tolist())
+).execute()
 
 
 dummy_start = DummyOperator(task_id="dummy_start", dag=dag)
 
 python1 = PythonOperator(task_id="update_table", python_callable=python1, dag=dag)
 
-python2 = PythonOperator(task_id="etl_to_postgres", python_callable=python2, dag=dag)
+python2 = PythonOperator(task_id="etl_to_postgres", python_callable=python2, dag=dag
 
-truncate = PythonOperator(task_id="truncate", python_callable=truncate, dag=dag, execution_timeout=timedelta(seconds=30))
-
-insert = PythonOperator(task_id="insert", python_callable=insert, dag=dag)
-
-dummy_start >> python1 >> python2 >> truncate >> insert
+dummy_start >> python1 >> python2
 # >> tab_refresh
