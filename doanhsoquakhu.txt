@@ -1,4 +1,4 @@
-abc
+abcggggggg
 With h_data as ( SELECT
 thang,
 Upper( Left( TO_CHAR(thang::TIMESTAMP, 'Month') ,3))  AS "monthname",
