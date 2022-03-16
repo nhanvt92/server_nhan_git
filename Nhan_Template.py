@@ -94,7 +94,7 @@ date_trunc('year', now()) + interval '1 year' , '1 day'::interval)  ),
 songayban as  ( SELECT month,year,sum(songayban) as songaybantrongthang from songay GROUP BY month,year ),
 
 songaybanmtd as (SELECT month,year,sum(songayban) as songaybanMTD from songay where 
- generate_series::Date <=now()::date
+ generate_series::Date <now()::date
 GROUP BY month,year )
 
 SELECT a.*,b.songaybanmtd from songayban a
