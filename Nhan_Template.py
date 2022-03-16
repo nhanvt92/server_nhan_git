@@ -28,6 +28,94 @@ dag_params = {
 service = get_service()
 spreadsheets_id = '13Gg1pzdNlsocvt0-Ws41mVoeUUDEsUBOrt5O8J-7aLM'
 
+sql = \
+'''
+With h_data as ( SELECT
+thang,
+Upper( Left( TO_CHAR(thang::TIMESTAMP, 'Month') ,3))  AS "monthname",
+EXTRACT(month from thang) as month,
+EXTRACT(year from thang) as year,
+Case WHEN EXTRACT(year from thang::TIMESTAMP) = EXTRACT(year from now()::TIMESTAMP) - 1 then 'ACT LY' ELSE 'ACT TY' end as data_type,
+CASE 
+WHEN phanam = 'PHA NAM' then 'MDS'
+when doanhsochuavat =0 and soluong <> 0 then 'CPA& OTH'
+WHEN makenhkh = 'DLPP' THEN 'OTC' ELSE makenhkh 
+END as makenhkh,
+f_sales.manv,
+d_users.tencvbh,
+d_users.tenquanlytt,
+d_users.tenquanlykhuvuc,
+d_users.tenquanlyvung,
+macongtycn,
+ngaychungtu,
+sodondathang,
+makhthue,
+makhcu,
+tenkhachhang,
+tentinhkh,
+makenhphu,
+masanpham,
+tensanphamviettat,
+tensanphamnb,
+soluong,
+doanhsochuavat,
+phanloaispcl,
+nhomsp,
+khuvucviettat,
+chinhanh,
+newhco,
+phanam
+FROM "f_sales"
+LEFT JOIN d_users ON
+f_sales.manv = d_users.manv
+WHERE
+LEFT(masanpham,1) != 'V' 
+AND f_sales.manv not in ('MA001', 'MA002', 'QUYNHPTA')
+AND makenhkh not in ( 'NB')
+AND phanam not in ( 'PHA NAM' )
+AND EXTRACT(year from thang::TIMESTAMP) >= EXTRACT(year from now()::TIMESTAMP) - 1
+),
+
+result_h_data as (
+
+SELECT month,year,masanpham,tensanphamnb,makenhkh,data_type,monthname,sum(soluong) as soluong,sum(doanhsochuavat) as doanhsochuavat from h_data GROUP BY month,year,masanpham,tensanphamnb,makenhkh,data_type,monthname),
+
+sale_days as (
+with songay as ( SELECT *,
+EXTRACT(month from generate_series) as month,
+EXTRACT(year from generate_series) as year,
+trim(to_char(generate_series, 'day')) as name,
+Case when trim(to_char(generate_series, 'day')) = 'sunday' then 0
+		 when trim(to_char(generate_series, 'day')) ='saturday' then 0.5
+		 else 1 end as songayban
+FROM generate_series(  date_trunc('year', now()) - interval '1 year' ,  
+date_trunc('year', now()) + interval '1 year' , '1 day'::interval)  ),
+
+songayban as  ( SELECT month,year,sum(songayban) as songaybantrongthang from songay GROUP BY month,year ),
+
+songaybanmtd as (SELECT month,year,sum(songayban) as songaybanMTD from songay where 
+ generate_series::Date <=now()::date
+GROUP BY month,year )
+
+SELECT a.*,b.songaybanmtd from songayban a
+LEFT JOIN songaybanmtd b on a.month=b.month and a.year =b.year
+ORDER BY YEAR,month )
+
+SELECT 
+A.masanpham||A.makenhkh||A.data_type||A.monthname as "Key",
+A.masanpham AS "Mã SP",
+A.tensanphamnb AS "Tên SP",
+A.makenhkh AS "Kênh",
+A.data_type AS "Data type",
+
+A.monthname AS "Tháng",
+Case when b.songaybanmtd < b.songaybantrongthang then round(a.soluong / b.songaybanmtd * b.songaybantrongthang ,0) 
+else a.soluong end as "Số lượng"
+from result_h_data a
+LEFT JOIN sale_days b on a.month = b.month and a.year = b.year
+ORDER BY masanpham,makenhkh,a.month
+'''
+
 dag = DAG(prefix+name,
           catchup=False,
           default_args=dag_params,
@@ -46,7 +134,7 @@ def python1():
 # transform
 
 def python2():
-    df1 = get_ps_df("")
+    df1 = get_ps_df(sql)
     service.spreadsheets().values().append(
     spreadsheetId=spreadsheets_id,
     valueInputOption='RAW',
